@@ -2,7 +2,7 @@
 ## IDEA Custom surveys created by user. These surveys can be responded by audience and results will be reported.
 
 ## SURVEY TEMPLATE 
-the survey will have three different quesion types:
+the survey will have three different quesion types: 
 
 1.  Textbox
 2.  Multiple Choice Questions (MCQ)
