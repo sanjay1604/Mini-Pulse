@@ -180,35 +180,4 @@ public class PollResource  {
             throw new MiniPulseBadArgumentException("Question title is empty for question #" + position);
         }
     }
-
-    public void testCaller() {
-        try {
-            test();
-        } catch (MalformedURLException m) {
-            System.out.printf("Bad Url");
-        } catch (IOException e) {
-            System.out.println("Unable to access site");
-        }
-    }
-
-    public void test() throws MalformedURLException, IOException {
-
-        URLConnection c= null;
-        int retries = 0;
-        while (retries++ < 3) {
-            try {
-                c = new URL("http://www.sanjay4084032830498430984320.com").openConnection();
-                break;
-            } catch (IOException ignore) {
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException ignore) {
-            }
-        }
-        if (c == null) {
-            throw new IOException("site doesn't exist. 3 retries exhausted");
-        }
-    }
-    
 }
