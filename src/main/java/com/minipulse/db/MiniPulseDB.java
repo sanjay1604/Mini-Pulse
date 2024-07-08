@@ -4,8 +4,6 @@ import com.minipulse.model.poll.Poll;
 import com.minipulse.model.poll.PollState;
 import com.minipulse.model.response.Response;
 
-import java.io.IOException;
-
 public interface MiniPulseDB {
 
     String getPollIdForUserByTitle(String user, String pollTitle);

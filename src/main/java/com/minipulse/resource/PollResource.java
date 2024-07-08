@@ -7,11 +7,6 @@ import com.minipulse.model.poll.PollState;
 import com.minipulse.model.question.Question;
 import com.minipulse.model.report.PollReport;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
 import java.util.UUID;
 
 public class PollResource  {

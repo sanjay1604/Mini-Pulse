@@ -4,17 +4,17 @@ import java.util.Map;
 
 public class SingleChoiceQuestion extends Question{
 
-    private Map<Integer,String> choice;
+    private Map<Integer,String> choices;
 
     public SingleChoiceQuestion() {
         setType("SINGULAR");
     }
 
-    public Map<Integer, String> getChoice() {
-        return choice;
+    public Map<Integer, String> getChoices() {
+        return choices;
     }
 
-    public void setChoice(Map<Integer, String> choice) {
-        this.choice = choice;
+    public void setChoices(Map<Integer, String> choices) {
+        this.choices = choices;
     }
 }
