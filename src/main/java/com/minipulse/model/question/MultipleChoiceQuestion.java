@@ -26,7 +26,7 @@ public class MultipleChoiceQuestion extends Question {
     public Map<Integer, String> getChoices() {
         return choices;
     }
-    /**
+    /**d
      * Setting the choices.
      */
     public void setChoices(Map<Integer, String> choices) {
