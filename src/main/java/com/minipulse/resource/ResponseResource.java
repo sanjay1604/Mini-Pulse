@@ -6,10 +6,10 @@ import com.minipulse.model.answer.Answer;
 import com.minipulse.model.answer.MultipleChoiceAnswer;
 import com.minipulse.model.answer.SingleChoiceAnswer;
 import com.minipulse.model.answer.TextAnswer;
-import com.minipulse.model.question.MultipleChoiceQuestion;
-import com.minipulse.model.question.Question;
 import com.minipulse.model.poll.Poll;
 import com.minipulse.model.poll.PollState;
+import com.minipulse.model.question.MultipleChoiceQuestion;
+import com.minipulse.model.question.Question;
 import com.minipulse.model.question.SingleChoiceQuestion;
 import com.minipulse.model.question.TextQuestion;
 import com.minipulse.model.response.Response;
@@ -80,7 +80,7 @@ public class ResponseResource {
                             SingleChoiceAnswer singleChoiceAnswer = (SingleChoiceAnswer) answer;
                             SingleChoiceQuestion singleChoiceQuestion = (SingleChoiceQuestion) question;
                             if (!question.isMandatory() && singleChoiceAnswer.getChoice() == 0) continue;
-                            if(!singleChoiceQuestion.getChoice().containsKey(singleChoiceAnswer.getChoice())) {
+                            if(!singleChoiceQuestion.getChoices().containsKey(singleChoiceAnswer.getChoice())) {
                                 throw new MiniPulseBadArgumentException("Not a valid choice for this question");
                             }
                         }else if(answer.getType().equals("TEXT")) {

@@ -7,4 +7,6 @@ module com.minipulse.ui {
 
     opens com.minipulse.ui to javafx.fxml;
     exports com.minipulse.ui;
+    exports com.minipulse.ui.user;
+    opens com.minipulse.ui.user to javafx.fxml;
 }
