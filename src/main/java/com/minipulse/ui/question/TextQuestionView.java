@@ -27,6 +27,7 @@ public class TextQuestionView extends QuestionView{
         row++;
     }
 
+
     public Question update(){
         TextQuestion tq = (TextQuestion) question;
         tq.setQuestionTitle(m_QuestionTitle.getText());

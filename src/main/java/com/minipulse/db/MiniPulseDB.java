@@ -30,7 +30,7 @@ public interface MiniPulseDB {
 
     Poll getPollEntirely(String pollId);
 
-    void newUser(String user, String userName);
+    void newUsASer(String user, String userName);
 
     String getUser(String user);
 

@@ -21,8 +21,8 @@ public class MultipleChoiceQuestionView extends QuestionView{
         this.choiceGridPane = new GridPane();
 
         GridPane.setColumnIndex(choiceGridPane, 1);
-        GridPane.setRowIndex(choiceGridPane, row);
         super.row++;
+        GridPane.setRowIndex(choiceGridPane, row);
         questionGridPane.getChildren().add(this.choiceGridPane);
         choiceGridPane.getColumnConstraints().addAll(new ColumnConstraints(400), new ColumnConstraints(200));
     }
