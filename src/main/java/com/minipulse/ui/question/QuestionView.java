@@ -15,6 +15,8 @@ public abstract class QuestionView {
 
     private boolean isDeleted = false;
 
+    private boolean isMandatory;
+
     protected TextField m_QuestionTitle;
     protected TextField m_QuestionDescription;
     public QuestionView(GridPane pollGridPane, int questionRow, Question question) {
@@ -60,7 +62,6 @@ public abstract class QuestionView {
         GridPane.setColumnIndex(deleteButton, 1);
         GridPane.setRowIndex(deleteButton, 10000);
         questionGridPane.getChildren().add(deleteButton);
-
     }
 
     public void delete(){

@@ -3,9 +3,8 @@ package com.minipulse.ui.user;
 import com.minipulse.db.DummyPollFactory;
 import com.minipulse.model.poll.Poll;
 import com.minipulse.model.poll.PollState;
-import com.minipulse.model.question.MultipleChoiceQuestion;
-import com.minipulse.model.question.TextQuestion;
 import com.minipulse.ui.poll.PollScene;
+import com.minipulse.ui.response.ResponseScene;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -14,7 +13,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
-import java.util.*;
+import java.util.List;
 
 public class UserView {
 
@@ -36,14 +35,32 @@ public class UserView {
             Label pollTitleText = new Label(poll.getPollTitle());
             GridPane.setRowIndex(pollTitleText, row);
             GridPane.setColumnIndex(pollTitleText, 0);
-            Button editPoll = new Button("Edit");
-            editPoll.setOnAction(event -> onEditPoll(poll));
-            GridPane.setRowIndex(editPoll, row);
-            GridPane.setColumnIndex(editPoll, 1);
-            gridPane.getChildren().addAll(pollTitleText, editPoll);
+            Button actionButton;
+            if (poll.getState() == PollState.NEW) {
+                actionButton = new Button("Edit");
+                actionButton.setOnAction(event -> onEditPoll(poll));
+            } else {
+                actionButton = new Button("Respond");
+                actionButton.setOnAction(event -> onRespondPoll(poll));
+            }
+            GridPane.setRowIndex(actionButton, row);
+            GridPane.setColumnIndex(actionButton, 1);
+            gridPane.getChildren().addAll(pollTitleText, actionButton);
             row++;
         }
+        Button newPollButton = new Button("New Poll");
+        newPollButton.setOnAction(event -> onNewPoll());
+        GridPane.setRowIndex(newPollButton, row);
+        GridPane.setColumnIndex(newPollButton, 0);
+        gridPane.getChildren().add(newPollButton);
         return gridPane;
+    }
+
+    private void onNewPoll() {
+        Poll poll = new Poll();
+        poll.setState(PollState.NEW);
+        DummyPollFactory.newInstance(userName).getPollsFor(userName).add(poll);
+        onEditPoll(poll);
     }
 
     private void onEditPoll(Poll poll) {
@@ -52,6 +69,11 @@ public class UserView {
         stage.show();
     }
 
+    private void onRespondPoll(Poll poll) {
+        Scene scene = ResponseScene.getScene(stage, poll, userName);
+        stage.setScene(scene);
+        stage.show();
+    }
     private List<Poll> getListOfPollsOwnedByUserFromDB(String userName) {
         return DummyPollFactory.newInstance(userName).getPollsFor(userName);
     }

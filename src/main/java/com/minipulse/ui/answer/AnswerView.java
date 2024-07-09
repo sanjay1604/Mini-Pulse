@@ -1,20 +1,30 @@
 package com.minipulse.ui.answer;
 
 import com.minipulse.model.answer.Answer;
+import com.minipulse.model.question.Question;
+import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 
-public class AnswerView {
-    protected final GridPane questionGridPane;
-    private final GridPane pollGridPane;
-    protected Answer answer;
-
-
-    public AnswerView(GridPane questionGridPane, GridPane pollGridPane, Answer answer) {
-        this.questionGridPane = questionGridPane;
-        this.pollGridPane = pollGridPane;
-        this.answer = answer;
+public abstract class AnswerView {
+    protected final VBox responseVBox;
+    protected final VBox answerVBox;
+    protected Question question;
+    public AnswerView(VBox responseVBox, Question question) {
+        this.responseVBox = responseVBox;
+        this.answerVBox = new VBox();
+        responseVBox.getChildren().add(answerVBox);
+        this.question = question;
     }
 
+    public void render() {
+        Label questionTitle = new Label(question.getQuestionTitle());
+        Label questionDescription = new Label(question.getQuestionDescription());
+        answerVBox.getChildren().addAll(questionTitle, questionDescription);
+        localRender();
+    }
 
+    protected abstract void localRender();
 
+    public abstract Answer update();
 }

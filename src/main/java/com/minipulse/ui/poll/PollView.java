@@ -10,6 +10,7 @@ import com.minipulse.ui.question.QuestionView;
 import com.minipulse.ui.question.SingleChoiceQuestionView;
 import com.minipulse.ui.question.TextQuestionView;
 import com.minipulse.ui.user.UserScene;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -94,7 +95,10 @@ public class PollView {
 
         addButton.setMinHeight(30);
         addButton.setContextMenu(contextMenu);
-        addButton.setOnAction(event -> contextMenu.show(addButton, addButton.getTranslateX(), addButton.getTranslateY()));
+        addButton.setOnAction(event -> {
+            Point2D screenPosition = addButton.localToScreen(0, 0);
+            contextMenu.show(addButton, screenPosition.getX(), screenPosition.getY());
+        });
 
         Button saveButton = new Button("Save");
         saveButton.setDefaultButton(true);
@@ -114,6 +118,7 @@ public class PollView {
         gridPane.getChildren().addAll(pollTitle, pollTitleText, pollDescription, pollDescriptionText, buttonBox);
         return gridPane;
     }
+
     private void onAddQuestion(String type) {
 
         if (type.equals("TEXT")){
