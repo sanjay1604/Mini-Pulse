@@ -1,5 +1,6 @@
 package com.minipulse.resource;
 
+import com.minipulse.db.DBFactory;
 import com.minipulse.db.MiniPulseDB;
 import com.minipulse.exception.MiniPulseBadArgumentException;
 import com.minipulse.model.answer.Answer;
@@ -19,6 +20,9 @@ import java.util.UUID;
 public class ResponseResource {
     private MiniPulseDB db;
 
+    public ResponseResource() {
+        setDb(DBFactory.getDB());
+    }
     public MiniPulseDB getDbe   () {
         return db;
     }
@@ -28,8 +32,6 @@ public class ResponseResource {
     }
 
     public Response submitResponse(Response response) throws MiniPulseBadArgumentException {
-
-
 
         if(response.getRespondingUser() == null || response.getRespondingUser().isEmpty()){
             throw new MiniPulseBadArgumentException("Invalid user");
@@ -47,9 +49,6 @@ public class ResponseResource {
         if(poll == null){
             throw new MiniPulseBadArgumentException("Invalid poll ID");
         }
-
-
-
 
         if(poll.getState() != PollState.ACCEPTING){
             throw new MiniPulseBadArgumentException("poll should be in accepting state");
@@ -107,10 +106,6 @@ public class ResponseResource {
                 }
             }
         }
-
-
-
-
 
         for (Question question : poll.getQuestions()){
             if(question.isMandatory()){

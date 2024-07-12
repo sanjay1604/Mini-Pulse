@@ -1,5 +1,6 @@
 package com.minipulse.ui.user;
 
+import com.minipulse.resource.UserResource;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -14,6 +15,8 @@ public class LoginView {
     private final Stage stage;
     private GridPane gridPane;
     private TextField m_UserText;
+
+    private final UserResource userResource = new UserResource();
 
     public LoginView(Stage stage) {
         this.stage = stage;
@@ -41,6 +44,7 @@ public class LoginView {
     }
 
     private void onSubmit() {
+        userResource.saveUser(m_UserText.getText(), m_UserText.getText());
         Scene scene = UserScene.getScene(stage, m_UserText.getText());
         stage.setScene(scene);
         stage.show();

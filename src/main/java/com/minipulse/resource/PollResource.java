@@ -1,5 +1,6 @@
 package com.minipulse.resource;
 
+import com.minipulse.db.DBFactory;
 import com.minipulse.db.MiniPulseDB;
 import com.minipulse.exception.MiniPulseBadArgumentException;
 import com.minipulse.model.poll.Poll;
@@ -7,13 +8,18 @@ import com.minipulse.model.poll.PollState;
 import com.minipulse.model.question.Question;
 import com.minipulse.model.report.PollReport;
 
+import java.util.List;
 import java.util.UUID;
 
 public class PollResource  {
 
     private MiniPulseDB db;
 
-    public MiniPulseDB getDbe   () {
+    public PollResource() {
+        setDb(DBFactory.getDB());
+    }
+
+    public MiniPulseDB getDb() {
         return db;
     }
 
@@ -103,6 +109,10 @@ public class PollResource  {
         return poll;
     }
 
+    public List<Poll> getAllPollsForUser(String userName) {
+        return db.getPollsByUser(userName);
+    }
+
     public void flightPoll(String pollId) throws MiniPulseBadArgumentException {
         if(pollId == null || pollId.isEmpty()){
             throw new MiniPulseBadArgumentException("Poll does not exist");
@@ -157,7 +167,7 @@ public class PollResource  {
         poll.setState(PollState.CLOSED);
         db.modifyPollState(pollId, PollState.CLOSED);
     }
-    
+
     public PollReport generateReport(String pollId) throws MiniPulseBadArgumentException {
         if(pollId == null || pollId.isEmpty()){
             throw new MiniPulseBadArgumentException("Poll does not exist");

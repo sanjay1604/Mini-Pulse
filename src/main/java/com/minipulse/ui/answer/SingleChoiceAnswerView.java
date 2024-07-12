@@ -2,7 +2,6 @@ package com.minipulse.ui.answer;
 
 import com.minipulse.model.answer.Answer;
 import com.minipulse.model.answer.SingleChoiceAnswer;
-import com.minipulse.model.question.MultipleChoiceQuestion;
 import com.minipulse.model.question.Question;
 import com.minipulse.model.question.SingleChoiceQuestion;
 import javafx.scene.control.RadioButton;

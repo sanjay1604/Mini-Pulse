@@ -1,7 +1,6 @@
 package com.minipulse.ui.response;
 
 import com.minipulse.model.poll.Poll;
-import com.minipulse.ui.poll.PollView;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;

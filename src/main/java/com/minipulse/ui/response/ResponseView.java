@@ -1,17 +1,21 @@
 package com.minipulse.ui.response;
 
+import com.minipulse.exception.MiniPulseBadArgumentException;
 import com.minipulse.model.answer.Answer;
 import com.minipulse.model.poll.Poll;
 import com.minipulse.model.question.Question;
 import com.minipulse.model.response.Response;
+import com.minipulse.resource.ResponseResource;
 import com.minipulse.ui.answer.AnswerView;
 import com.minipulse.ui.answer.MultipleChoiceAnswerView;
 import com.minipulse.ui.answer.SingleChoiceAnswerView;
 import com.minipulse.ui.answer.TextAnswerView;
 import com.minipulse.ui.user.UserScene;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -24,7 +28,9 @@ public class ResponseView {
     private final Poll poll;
     private final VBox responseVBox;
     private final String respondingUser;
-    private List<AnswerView> answerViews = new ArrayList<>();
+    private final List<AnswerView> answerViews = new ArrayList<>();
+
+    private final ResponseResource responseResource = new ResponseResource();
 
     public ResponseView(Stage stage, Poll poll, String respondingUser) {
         this.stage = stage;
@@ -45,6 +51,9 @@ public class ResponseView {
             }
         }
 
+        Label emptyLine = new Label(" ");
+
+        HBox options = new HBox();
         Button saveButton = new Button("Save");
         saveButton.setDefaultButton(true);
         saveButton.setOnAction(event -> onSubmit());
@@ -53,7 +62,8 @@ public class ResponseView {
         cancelButton.setCancelButton(true);
         cancelButton.setOnAction(event -> OnCancel());
 
-        responseVBox.getChildren().addAll(saveButton, cancelButton);
+        options.getChildren().addAll(saveButton, cancelButton);
+        responseVBox.getChildren().addAll(emptyLine, options);
         return responseVBox;
     }
 
@@ -95,11 +105,20 @@ public class ResponseView {
             answers.add(answerView.update());
         }
         response.setAnswers(answers);
-        if (poll.getResponses() == null) {
-            poll.setResponses(new ArrayList<>());
+        try {
+            responseResource.submitResponse(response);
+        } catch (MiniPulseBadArgumentException e) {
+            showError(e.getMessage());
         }
-        poll.getResponses().add(response);
         return response;
     }
 
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        alert.showAndWait();
+    }
 }

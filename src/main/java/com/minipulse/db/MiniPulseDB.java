@@ -4,8 +4,13 @@ import com.minipulse.model.poll.Poll;
 import com.minipulse.model.poll.PollState;
 import com.minipulse.model.response.Response;
 
+import java.util.List;
+
 public interface MiniPulseDB {
 
+    List<Poll> getPollsByUser(String user);
+
+    List<Poll> getAcceptingPolls();
     String getPollIdForUserByTitle(String user, String pollTitle);
 
     void savePollAndOverwriteQuestions(Poll poll);
@@ -18,7 +23,7 @@ public interface MiniPulseDB {
 
     Poll getPollEntirely(String pollId);
 
-    void newUsASer(String user, String userName);
+    void newUser(String user, String userName);
 
     String getUser(String user);
 

@@ -33,6 +33,11 @@ public abstract class QuestionView {
 
     protected abstract void localRender();
     public void render(){
+        Label emptyLine = new Label(" ");
+        GridPane.setColumnIndex(emptyLine, 0);
+        GridPane.setRowIndex(emptyLine, row);
+        row++;
+
         Label questionTitle = new Label("Question Title");
         questionTitle.setMinHeight(30);
         GridPane.setColumnIndex(questionTitle, 0);
@@ -53,7 +58,7 @@ public abstract class QuestionView {
         GridPane.setRowIndex(questionDescriptionText, row);
         row++;
 
-        questionGridPane.getChildren().addAll(questionTitle, questionTitleText, questionDescription, questionDescriptionText);
+        questionGridPane.getChildren().addAll(emptyLine, questionTitle, questionTitleText, questionDescription, questionDescriptionText);
         localRender();
 
         Button deleteButton = new Button("Delete Question");
