@@ -2,6 +2,7 @@ package com.minipulse.ui.user;
 
 import com.minipulse.resource.UserResource;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -9,6 +10,12 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+
+import java.io.IOException;
 
 public class LoginView {
 
@@ -44,7 +51,33 @@ public class LoginView {
     }
 
     private void onSubmit() {
-        userResource.saveUser(m_UserText.getText(), m_UserText.getText());
+        try {
+            final HttpPost httpPost = new HttpPost("http://localhost:8080/minipulse/user/" + m_UserText.getText() + "/" + m_UserText.getText());
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse response = client.execute(httpPost)) {
+                    if (response.getStatusLine().getStatusCode() < 300) {
+                        switchToUserScreen();
+                    } else {
+                        showError(response.getStatusLine().getReasonPhrase());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            showError(e.getMessage());
+        }
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        alert.showAndWait();
+    }
+
+    private void switchToUserScreen() {
         Scene scene = UserScene.getScene(stage, m_UserText.getText());
         stage.setScene(scene);
         stage.show();

@@ -1,5 +1,6 @@
 package com.minipulse.ui.poll;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minipulse.exception.MiniPulseBadArgumentException;
 import com.minipulse.model.poll.Poll;
 import com.minipulse.model.question.MultipleChoiceQuestion;
@@ -21,6 +22,11 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -161,7 +167,7 @@ public class PollView {
         questionViews.add(questionView);
     }
     public Poll update() {
-        Poll pollToSave = new Poll();
+        Poll pollToSave = poll.clone();
         pollToSave.setOwner(poll.getOwner());
         pollToSave.setPollId(poll.getPollId());
         pollToSave.setState(poll.getState());
@@ -177,15 +183,45 @@ public class PollView {
         Poll updatedPoll = null;
         try {
             if (poll.getPollId() == null) {
-                updatedPoll = pollResource.createPoll(pollToSave);
+                updatedPoll = createNewPoll(pollToSave);
             } else {
-                updatedPoll = pollResource.updatePoll(pollToSave);
+                updatedPoll = updateExistingPoll(pollToSave);
             }
             switchToUserView();
         } catch (MiniPulseBadArgumentException e) {
             showError(e.getMessage());
         }
         return updatedPoll;
+    }
+
+    private Poll updateExistingPoll(Poll pollToSave) throws MiniPulseBadArgumentException {
+        return pollResource.updatePoll(pollToSave);
+    }
+
+    private Poll createNewPoll(Poll pollToSave) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String pollObjAsJSON = mapper.writeValueAsString(pollToSave);
+            final HttpPost httpPost = new HttpPost("http://localhost:8080/minipulse/poll");
+
+            final StringEntity entity = new StringEntity(pollObjAsJSON);
+            httpPost.setEntity(entity);
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse response = client.execute(httpPost)) {
+                    if (response.getStatusLine().getStatusCode() < 300) {
+                        return mapper.readValue(response.getEntity().getContent(), Poll.class);
+                    }
+                    showError(response.getStatusLine().getReasonPhrase());
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            showError(e.getMessage());
+            return null;
+        }
     }
 
     private void showError(String message) {

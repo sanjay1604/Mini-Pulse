@@ -1,7 +1,6 @@
 package com.minipulse.model.question;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.HashMap;
 
 /**
  * This is the subclass TextQuestion. This class contains questions that accept response type as texts.

@@ -1,22 +1,16 @@
 package com.minipulse.model.poll;
 
-import com.minipulse.model.question.MultipleChoiceQuestion;
 import com.minipulse.model.question.Question;
 import com.minipulse.model.response.Response;
 
-import javax.xml.bind.JAXB;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @XmlRootElement
 public class Poll {
-    private List<Question> questions;
-    private List<Response> responses;
+    private List<Question> questions = new ArrayList<>();
+    private List<Response> responses = new ArrayList<>();
     private String PollId;
     private String owner;
     private PollState state;

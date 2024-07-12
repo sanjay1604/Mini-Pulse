@@ -6,6 +6,24 @@ module com.minipulse.ui {
     requires com.dlsc.formsfx;
 
     requires java.xml.bind;
+    requires jersey.media.json.jackson;
+    requires com.fasterxml.jackson.databind;
+    requires com.fasterxml.jackson.core;
+    requires jakarta.activation;
+    requires java.sql;
+
+    requires java.ws.rs;
+
+    requires grizzly.http.server;
+    requires grizzly.framework;
+    requires jersey.container.grizzly2.http;
+    requires jersey.server;
+    requires jersey.common;
+
+    requires org.apache.httpcomponents.httpclient;
+    requires org.apache.httpcomponents.httpcore;
+
+    requires osgi.resource.locator;
 
     opens com.minipulse.ui to javafx.fxml;
     opens com.minipulse.ui.user to javafx.fxml;
@@ -18,6 +36,8 @@ module com.minipulse.ui {
     exports com.minipulse.model.report;
     exports com.minipulse.model.response;
     exports com.minipulse.model.user;
+
+    exports com.minipulse.resource;
 
     exports com.minipulse.ui;
     exports com.minipulse.ui.user;

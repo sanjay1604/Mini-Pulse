@@ -3,6 +3,12 @@ package com.minipulse.resource;
 import com.minipulse.db.DBFactory;
 import com.minipulse.db.MiniPulseDB;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+
+@Path("user")
 public class UserResource {
 
     private MiniPulseDB db;
@@ -19,11 +25,15 @@ public class UserResource {
         this.db = db;
     }
 
-    public void saveUser(String user, String userName) {
+    @POST
+    @Path("{user}/{userName}")
+    public void saveUser(@PathParam("user") String user, @PathParam("userName") String userName) {
         db.newUser(user, userName);
     }
 
-    public String getUser(String user) {
+    @GET
+    @Path("{user}")
+    public String getUser(@PathParam("user") String user) {
         return db.getUser(user);
     }
 }

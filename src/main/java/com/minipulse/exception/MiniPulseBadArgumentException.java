@@ -1,23 +1,22 @@
 package com.minipulse.exception;
 
-public class MiniPulseBadArgumentException extends Exception {
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+
+public class MiniPulseBadArgumentException extends WebApplicationException {
     public MiniPulseBadArgumentException() {
         super();
     }
 
     public MiniPulseBadArgumentException(String message) {
-        super(message);
+        super(message, Response.status(400).build());
     }
 
     public MiniPulseBadArgumentException(String message, Throwable cause) {
-        super(message, cause);
+        super(message, cause, Response.status(400).build());
     }
 
     public MiniPulseBadArgumentException(Throwable cause) {
-        super(cause);
-    }
-
-    protected MiniPulseBadArgumentException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
+        super(cause, Response.status(400).build());
     }
 }

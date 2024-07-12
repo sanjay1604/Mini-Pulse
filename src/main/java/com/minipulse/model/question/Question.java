@@ -1,5 +1,9 @@
 package com.minipulse.model.question;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -12,6 +16,15 @@ import javax.xml.bind.annotation.XmlTransient;
  */
 @XmlTransient
 @XmlSeeAlso({TextQuestion.class, MultipleChoiceQuestion.class, SingleChoiceQuestion.class})
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+@JsonSubTypes(
+        {
+                @JsonSubTypes.Type(value = TextQuestion.class, name = "TEXT"),
+                @JsonSubTypes.Type(value = MultipleChoiceQuestion.class, name = "MULTIPLE"),
+                @JsonSubTypes.Type(value = SingleChoiceQuestion.class, name = "SINGULAR")
+        }
+)
 public abstract class Question {
     private String pollId;
     private String questionId;
@@ -77,7 +90,7 @@ public abstract class Question {
         return type;
     }
 
-    protected void setType(String type) {
+    public void setType(String type) {
         this.type = type;
     }
 

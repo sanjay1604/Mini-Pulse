@@ -1,7 +1,6 @@
 package com.minipulse.model.question;
 
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -30,7 +29,7 @@ public class SingleChoiceQuestion extends Question{
         cloneQuestion.setQuestionTitle(getQuestionTitle());
         cloneQuestion.setQuestionDescription(getQuestionDescription());
         cloneQuestion.setPollId(getPollId());
-        cloneQuestion.setChoices(new HashMap<>(choices));
+        cloneQuestion.setChoices(new TreeMap<>(choices));
         return cloneQuestion;
     }
 }

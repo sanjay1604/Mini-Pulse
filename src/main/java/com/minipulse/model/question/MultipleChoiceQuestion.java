@@ -10,8 +10,8 @@ package com.minipulse.model.question;
  * 1. Audience can only choose the amount of choices the creator has decided.
  * 2. The text options correspond to their respective hash values.
  */
+
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -45,7 +45,7 @@ public class MultipleChoiceQuestion extends Question {
         cloneQuestion.setQuestionTitle(getQuestionTitle());
         cloneQuestion.setQuestionDescription(getQuestionDescription());
         cloneQuestion.setPollId(getPollId());
-        cloneQuestion.setChoices(new HashMap<>(choices));
+        cloneQuestion.setChoices(new TreeMap<>(choices));
         return cloneQuestion;
     }
 }

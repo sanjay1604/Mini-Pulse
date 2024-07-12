@@ -81,7 +81,7 @@ public class MultipleChoiceQuestionView extends QuestionView{
         MultipleChoiceQuestion mcq = (MultipleChoiceQuestion) question;
         mcq.setQuestionTitle(m_QuestionTitle.getText());
         mcq.setQuestionDescription(m_QuestionDescription.getText());
-        Map<Integer, String> choices = new HashMap<>();
+        Map<Integer, String> choices = new TreeMap<>();
         int key = 1;
         for (TextField choiceText : m_Choices) {
             choices.put(key, choiceText.getText());
