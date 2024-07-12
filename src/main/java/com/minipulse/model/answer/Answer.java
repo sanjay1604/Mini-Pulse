@@ -1,5 +1,10 @@
 package com.minipulse.model.answer;
 
+import javax.xml.bind.annotation.XmlSeeAlso;
+import javax.xml.bind.annotation.XmlTransient;
+
+@XmlTransient
+@XmlSeeAlso({TextAnswer.class, MultipleChoiceAnswer.class, SingleChoiceAnswer.class})
 public abstract class Answer {
 
     private String PollId;
@@ -47,5 +52,7 @@ public abstract class Answer {
     protected void setType(String type) {
         this.type = type;
     }
+
+    public abstract Answer clone();
 }
 

@@ -1,5 +1,8 @@
 package com.minipulse.model.question;
 
+import javax.xml.bind.annotation.XmlSeeAlso;
+import javax.xml.bind.annotation.XmlTransient;
+
 /**
  * This is the base question class. Other questions such as TextQuestion
  * MultipleChoiceQuestion etc. extend this class.
@@ -7,6 +10,8 @@ package com.minipulse.model.question;
  * When a new survey or poll is created one or more questions are attached
  * to the survey or poll.
  */
+@XmlTransient
+@XmlSeeAlso({TextQuestion.class, MultipleChoiceQuestion.class, SingleChoiceQuestion.class})
 public abstract class Question {
     private String pollId;
     private String questionId;
@@ -16,20 +21,20 @@ public abstract class Question {
 
     private String type;
 
- /**
-  * Gets the Questions' title
-  * @return Question Tile
-  */
- public String getQuestionTitle() {
-   return questionTitle;
-  }
+    /**
+     * Gets the Questions' title
+     * @return Question Tile
+     */
+    public String getQuestionTitle() {
+        return questionTitle;
+    }
 
- /**
-  * Sets the current Questions' title
-  */
-  public void setQuestionTitle(String questionTitle) {
-   this.questionTitle = questionTitle;
-  }
+    /**
+     * Sets the current Questions' title
+     */
+    public void setQuestionTitle(String questionTitle) {
+        this.questionTitle = questionTitle;
+    }
 
     public String getPollId() {
         return pollId;
@@ -48,31 +53,33 @@ public abstract class Question {
     }
 
     /**\
-  * Gets the Questions' description
-  * @return Question description
-  */
+     * Gets the Questions' description
+     * @return Question description
+     */
 
- public String getQuestionDescription() {
-   return questionDescription;
-  }
+    public String getQuestionDescription() {
+        return questionDescription;
+    }
 
-  public void setQuestionDescription(String questionDescription) {
-   this.questionDescription = questionDescription;
-  }
+    public void setQuestionDescription(String questionDescription) {
+        this.questionDescription = questionDescription;
+    }
 
-  public boolean isMandatory() {
-   return isMandatory;
-  }
+    public boolean isMandatory() {
+        return isMandatory;
+    }
 
-  public void setMandatory(boolean mandatory) {
-   isMandatory = mandatory;
-  }
+    public void setMandatory(boolean mandatory) {
+        isMandatory = mandatory;
+    }
 
-  public String getType() {
-     return type;
-  }
+    public String getType() {
+        return type;
+    }
 
-  protected void setType(String type) {
-     this.type = type;
-  }
- }
+    protected void setType(String type) {
+        this.type = type;
+    }
+
+    public abstract Question clone();
+}

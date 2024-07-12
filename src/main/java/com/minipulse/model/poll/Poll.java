@@ -1,10 +1,19 @@
 package com.minipulse.model.poll;
 
+import com.minipulse.model.question.MultipleChoiceQuestion;
 import com.minipulse.model.question.Question;
 import com.minipulse.model.response.Response;
 
-import java.util.List;
+import javax.xml.bind.JAXB;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.annotation.XmlRootElement;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.*;
 
+@XmlRootElement
 public class Poll {
     private List<Question> questions;
     private List<Response> responses;
@@ -68,5 +77,21 @@ public class Poll {
 
     public void setPollDescription(String pollDescription) {
         this.pollDescription = pollDescription;
+    }
+
+    public Poll clone() {
+        Poll clonePoll = new Poll();
+        clonePoll.setState(getState());
+        clonePoll.setPollTitle(getPollTitle());
+        clonePoll.setPollDescription(getPollDescription());
+        clonePoll.setOwner(getOwner());
+        clonePoll.setPollId(getPollId());
+        for (Question question : getQuestions()) {
+            clonePoll.questions.add(question.clone());
+        }
+        for (Response response : getResponses()) {
+            clonePoll.responses.add(response.clone());
+        }
+        return clonePoll;
     }
 }

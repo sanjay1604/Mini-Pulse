@@ -1,5 +1,8 @@
 package com.minipulse.model.user;
 
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement
 public class User {
     private String userId;
     private String userName;
