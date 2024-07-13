@@ -1,10 +1,13 @@
 package com.minipulse.ui.user;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minipulse.exception.MiniPulseBadArgumentException;
 import com.minipulse.model.poll.Poll;
 import com.minipulse.model.poll.PollState;
 import com.minipulse.resource.PollResource;
 import com.minipulse.ui.poll.PollScene;
+import com.minipulse.ui.report.ReportScene;
 import com.minipulse.ui.response.ResponseScene;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -16,7 +19,15 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class UserView {
@@ -25,21 +36,65 @@ public class UserView {
     private final GridPane gridPane;
     private final Stage stage;
 
-    private final PollResource pollResource = new PollResource();
-
     public UserView(Stage stage, String userName) {
         this.stage = stage;
         this.userName = userName;
         this.gridPane = new GridPane();
-        gridPane.getColumnConstraints().addAll(new ColumnConstraints(750),new ColumnConstraints(250));
+        gridPane.getColumnConstraints().addAll(new ColumnConstraints(500),new ColumnConstraints(250), new ColumnConstraints(500),new ColumnConstraints(250));
     }
 
     public Pane render() {
+        renderOwnedPolls();
+        renderAcceptingPolls();
+        return gridPane;
+    }
+
+    private void renderAcceptingPolls() {
+        List<Poll> polls = getAcceptingPollsFromDB(userName);
+        int row = 0;
+        for (Poll poll : polls) {
+            Label pollTitleText = new Label(poll.getPollTitle());
+            pollTitleText.setMinHeight(40);
+            GridPane.setRowIndex(pollTitleText, row);
+            GridPane.setColumnIndex(pollTitleText, 2);
+            HBox actionPanel = new HBox();
+            Button respondButton = new Button("Respond");
+            respondButton.setOnAction(event -> onRespondPoll(poll));
+            GridPane.setRowIndex(actionPanel, row);
+            GridPane.setColumnIndex(actionPanel, 3);
+            actionPanel.getChildren().add(respondButton);
+            gridPane.getChildren().addAll(pollTitleText, actionPanel);
+            row++;
+        }
+    }
+
+    private List<Poll> getAcceptingPollsFromDB(String userName) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            final HttpGet httpGet = new HttpGet("http://localhost:8080/minipulse/poll/accepting/" + userName);
+            httpGet.setHeader("Accept", "application/json");
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse response = client.execute(httpGet)) {
+                    if (response.getStatusLine().getStatusCode() < 300) {
+                        return mapper.readValue(response.getEntity().getContent(), new TypeReference<>(){});
+                    }
+                    showError(response.getStatusLine().getReasonPhrase());
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            showError(e.getMessage());
+            return null;
+        }
+    }
+
+    public void renderOwnedPolls() {
         List<Poll> polls = getListOfPollsOwnedByUserFromDB(userName);
         int row = 0;
         for (Poll poll : polls) {
             Label pollTitleText = new Label(poll.getPollTitle());
-            pollTitleText.setMinHeight(45);
+            pollTitleText.setMinHeight(40);
             GridPane.setRowIndex(pollTitleText, row);
             GridPane.setColumnIndex(pollTitleText, 0);
             HBox actionPanel = new HBox();
@@ -50,14 +105,12 @@ public class UserView {
                 flightButton.setOnAction(event -> onFlightPoll(poll));
                 actionPanel.getChildren().addAll(editButton, flightButton);
             } else if (poll.getState() == PollState.ACCEPTING) {
-                Button respondButton = new Button("Respond");
-                respondButton.setOnAction(event -> onRespondPoll(poll));
                 Button closeButton = new Button("Close");
                 closeButton.setOnAction(event -> onClosePoll(poll));
-                actionPanel.getChildren().addAll(respondButton, closeButton);
+                actionPanel.getChildren().addAll(closeButton);
             } else {
                 Button reportButton = new Button("View Report");
-                reportButton.setOnAction(event -> onViewReport(poll));
+                reportButton.setOnAction(event -> onViewReport(poll.getPollId()));
                 actionPanel.getChildren().addAll(reportButton);
             }
             GridPane.setRowIndex(actionPanel, row);
@@ -81,7 +134,6 @@ public class UserView {
 
         options.getChildren().addAll(newPollButton, logoutButton);
         gridPane.getChildren().addAll(emptyLine, options);
-        return gridPane;
     }
 
     private void onLogout() {
@@ -90,30 +142,80 @@ public class UserView {
         stage.show();
     }
 
-    private void onViewReport(Poll poll) {
+    private void onViewReport(String pollId) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            final HttpGet httpGet = new HttpGet("http://localhost:8080/minipulse/poll/withResponses/" + pollId);
+            httpGet.setHeader("Accept", "application/json");
 
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse response = client.execute(httpGet)) {
+                    if (response.getStatusLine().getStatusCode() < 300) {
+                        Poll fullPollWithResponses = mapper.readValue(response.getEntity().getContent(), Poll.class);
+                        showReport(fullPollWithResponses);
+                    } else {
+                        showError(response.getStatusLine().getReasonPhrase());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            showError(e.getMessage());
+        }
+    }
+
+    public void showReport(Poll poll) {
+        Scene scene = ReportScene.getScene(stage, poll);
+        stage.setScene(scene);
+        stage.show();
     }
 
     private void onFlightPoll(Poll poll) {
         try {
-            pollResource.flightPoll(poll.getPollId());
-            Scene scene = UserScene.getScene(stage, userName);
-            stage.setScene(scene);
-            stage.show();
-        } catch (MiniPulseBadArgumentException e) {
+            final HttpPost httpPost = new HttpPost("http://localhost:8080/minipulse/poll/flight/" + poll.getPollId());
+
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse response = client.execute(httpPost)) {
+                    if (response.getStatusLine().getStatusCode() < 300) {
+                        refreshScreen();
+                    } else {
+                        showError(response.getStatusLine().getReasonPhrase());
+                    }
+                }
+            }
+        } catch (Exception e) {
             showError(e.getMessage());
         }
     }
 
     private void onClosePoll(Poll poll) {
         try {
-            pollResource.closePoll(poll.getPollId());
-            Scene scene = UserScene.getScene(stage, userName);
-            stage.setScene(scene);
-            stage.show();
-        } catch (MiniPulseBadArgumentException e) {
+            ObjectMapper mapper = new ObjectMapper();
+            final HttpPost httpPost = new HttpPost("http://localhost:8080/minipulse/poll/close/" + poll.getPollId());
+
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse response = client.execute(httpPost)) {
+                    if (response.getStatusLine().getStatusCode() < 300) {
+                        refreshScreen();
+                    } else {
+                        showError(response.getStatusLine().getReasonPhrase());
+                    }
+                }
+            }
+        } catch (Exception e) {
             showError(e.getMessage());
         }
+    }
+
+    public void refreshScreen() {
+        Scene scene = UserScene.getScene(stage, userName);
+        stage.setScene(scene);
+        stage.show();
     }
 
     private void onNewPoll() {
@@ -145,6 +247,23 @@ public class UserView {
     }
 
     private List<Poll> getListOfPollsOwnedByUserFromDB(String userName) {
-        return pollResource.getAllPollsForUser(userName);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            final HttpGet httpGet = new HttpGet("http://localhost:8080/minipulse/poll/byUser/" + userName);
+            httpGet.setHeader("Accept", "application/json");
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse response = client.execute(httpGet)) {
+                    if (response.getStatusLine().getStatusCode() < 300) {
+                        return mapper.readValue(response.getEntity().getContent(), new TypeReference<>(){});
+                    }
+                    showError(response.getStatusLine().getReasonPhrase());
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            showError(e.getMessage());
+            return null;
+        }
     }
 }

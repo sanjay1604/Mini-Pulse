@@ -26,10 +26,10 @@ public class MemoryDB implements MiniPulseDB {
     }
 
     @Override
-    public List<Poll> getAcceptingPolls() {
+    public List<Poll> getAcceptingPolls(String user) {
         List<Poll> outList = new ArrayList<>();
         for (Poll poll : polls.values()) {
-            if (poll.getState() == PollState.ACCEPTING) {
+            if (poll.getState() == PollState.ACCEPTING && !poll.getOwner().equals(user)) {
                 outList.add(poll);
             }
         }

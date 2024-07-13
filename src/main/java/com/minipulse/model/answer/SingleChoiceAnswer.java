@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class SingleChoiceAnswer extends Answer{
     private int choice;
     public SingleChoiceAnswer(){
-        setType("SINGLE");
+        setType("SINGULAR");
     }
 
     public int getChoice() {

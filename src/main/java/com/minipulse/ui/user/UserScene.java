@@ -8,7 +8,7 @@ public class UserScene {
     public static Scene getScene(Stage stage, String userName) {
         UserView userView = new UserView(stage, userName);
         Pane pane = userView.render();
-        Scene scene = new Scene(pane, 1000, 400);
+        Scene scene = new Scene(pane, 1500, 400);
         return scene;
     }
 }

@@ -33,12 +33,13 @@ module com.minipulse.ui {
     exports com.minipulse.model.answer;
     exports com.minipulse.model.poll;
     exports com.minipulse.model.question;
-    exports com.minipulse.model.report;
     exports com.minipulse.model.response;
     exports com.minipulse.model.user;
 
     exports com.minipulse.resource;
 
     exports com.minipulse.ui;
+    exports com.minipulse.db;
+    exports com.minipulse.exception;
     exports com.minipulse.ui.user;
 }

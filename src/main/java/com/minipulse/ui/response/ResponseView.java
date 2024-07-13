@@ -1,6 +1,6 @@
 package com.minipulse.ui.response;
 
-import com.minipulse.exception.MiniPulseBadArgumentException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minipulse.model.answer.Answer;
 import com.minipulse.model.poll.Poll;
 import com.minipulse.model.question.Question;
@@ -19,6 +19,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +33,7 @@ public class ResponseView {
     private final Poll poll;
     private final VBox responseVBox;
     private final String respondingUser;
-    private final List<AnswerView> answerViews = new ArrayList<>();
-
-    private final ResponseResource responseResource = new ResponseResource();
+    private final List<AnswerView> m_answerViews = new ArrayList<>();
 
     public ResponseView(Stage stage, Poll poll, String respondingUser) {
         this.stage = stage;
@@ -68,8 +71,10 @@ public class ResponseView {
     }
 
     private void onSubmit() {
-        update();
-        switchToUserView();
+        Response response = update();
+        if (response != null) {
+            switchToUserView();
+        }
     }
 
     private void OnCancel() {
@@ -93,7 +98,7 @@ public class ResponseView {
             answerView = new MultipleChoiceAnswerView(responseVBox, question);
         }
         answerView.render();
-        answerViews.add(answerView);
+        m_answerViews.add(answerView);
     }
 
     public Response update() {
@@ -101,16 +106,37 @@ public class ResponseView {
         response.setPollId(poll.getPollId());
         response.setRespondingUser(respondingUser);
         List<Answer> answers = new ArrayList<>();
-        for (AnswerView answerView : answerViews) {
+        for (AnswerView answerView : m_answerViews) {
             answers.add(answerView.update());
         }
         response.setAnswers(answers);
+        return submitResponse(response);
+    }
+
+    private Response submitResponse(Response response) {
         try {
-            responseResource.submitResponse(response);
-        } catch (MiniPulseBadArgumentException e) {
+            ObjectMapper mapper = new ObjectMapper();
+            String pollObjAsJSON = mapper.writeValueAsString(response);
+            final HttpPost httpPost = new HttpPost("http://localhost:8080/minipulse/response");
+
+            final StringEntity entity = new StringEntity(pollObjAsJSON);
+            httpPost.setEntity(entity);
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse clientResponse = client.execute(httpPost)) {
+                    if (clientResponse.getStatusLine().getStatusCode() < 300) {
+                        return mapper.readValue(clientResponse.getEntity().getContent(), Response.class);
+                    }
+                    showError(clientResponse.getStatusLine().getReasonPhrase());
+                }
+            }
+            return null;
+        } catch (Exception e) {
             showError(e.getMessage());
+            return null;
         }
-        return response;
     }
 
     private void showError(String message) {

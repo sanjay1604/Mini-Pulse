@@ -23,8 +23,6 @@ public class LoginView {
     private GridPane gridPane;
     private TextField m_UserText;
 
-    private final UserResource userResource = new UserResource();
-
     public LoginView(Stage stage) {
         this.stage = stage;
         this.gridPane = new GridPane();

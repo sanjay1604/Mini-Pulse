@@ -10,7 +10,7 @@ public interface MiniPulseDB {
 
     List<Poll> getPollsByUser(String user);
 
-    List<Poll> getAcceptingPolls();
+    List<Poll> getAcceptingPolls(String user);
     String getPollIdForUserByTitle(String user, String pollTitle);
 
     void savePollAndOverwriteQuestions(Poll poll);

@@ -24,6 +24,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -44,7 +45,7 @@ public class PollView {
     /** View elements that hold user data for poll */
     private TextField m_PollTitle;
     private TextField m_PollDescription;
-    private final Set<QuestionView> questionViews = new HashSet<>();
+    private final Set<QuestionView> m_questionViews = new HashSet<>();
 
     private final Stage stage;
 
@@ -164,7 +165,7 @@ public class PollView {
             questionView = new MultipleChoiceQuestionView(gridPane, row, question);
         }
         questionView.render();
-        questionViews.add(questionView);
+        m_questionViews.add(questionView);
     }
     public Poll update() {
         Poll pollToSave = poll.clone();
@@ -174,7 +175,7 @@ public class PollView {
         pollToSave.setPollTitle(m_PollTitle.getText());
         pollToSave.setPollDescription(m_PollDescription.getText());
         List<Question> questions = new ArrayList<>();
-        for (QuestionView questionView : questionViews) {
+        for (QuestionView questionView : m_questionViews) {
             if (questionView.isDeleted()) continue;
             questions.add(questionView.update());
         }
@@ -195,7 +196,29 @@ public class PollView {
     }
 
     private Poll updateExistingPoll(Poll pollToSave) throws MiniPulseBadArgumentException {
-        return pollResource.updatePoll(pollToSave);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String pollObjAsJSON = mapper.writeValueAsString(pollToSave);
+            final HttpPut httpPut = new HttpPut("http://localhost:8080/minipulse/poll");
+
+            final StringEntity entity = new StringEntity(pollObjAsJSON);
+            httpPut.setEntity(entity);
+            httpPut.setHeader("Accept", "application/json");
+            httpPut.setHeader("Content-type", "application/json");
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse response = client.execute(httpPut)) {
+                    if (response.getStatusLine().getStatusCode() < 300) {
+                        return mapper.readValue(response.getEntity().getContent(), Poll.class);
+                    }
+                    showError(response.getStatusLine().getReasonPhrase());
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            showError(e.getMessage());
+            return null;
+        }
     }
 
     private Poll createNewPoll(Poll pollToSave) {
