@@ -198,7 +198,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
             			{
             				Poll poll = new Poll( rs.getString("poll_id"), rs.getString("user"), rs.getString("title"), PollState.valueOf(rs.getString("state")));
 
-            			quest.setString(1,pollId);
+            			quesst.setString(1,pollId);
             			ResultSet qs= quest.executeQuery();
             			if(qs.next())
             			{
