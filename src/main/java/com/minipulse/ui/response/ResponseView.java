@@ -1,20 +1,29 @@
 package com.minipulse.ui.response;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minipulse.model.answer.Answer;
 import com.minipulse.model.poll.Poll;
 import com.minipulse.model.question.Question;
 import com.minipulse.model.response.Response;
+import com.minipulse.resource.ResponseResource;
 import com.minipulse.ui.answer.AnswerView;
 import com.minipulse.ui.answer.MultipleChoiceAnswerView;
 import com.minipulse.ui.answer.SingleChoiceAnswerView;
 import com.minipulse.ui.answer.TextAnswerView;
 import com.minipulse.ui.user.UserScene;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +33,7 @@ public class ResponseView {
     private final Poll poll;
     private final VBox responseVBox;
     private final String respondingUser;
-    private List<AnswerView> answerViews = new ArrayList<>();
+    private final List<AnswerView> m_answerViews = new ArrayList<>();
 
     public ResponseView(Stage stage, Poll poll, String respondingUser) {
         this.stage = stage;
@@ -45,6 +54,9 @@ public class ResponseView {
             }
         }
 
+        Label emptyLine = new Label(" ");
+
+        HBox options = new HBox();
         Button saveButton = new Button("Save");
         saveButton.setDefaultButton(true);
         saveButton.setOnAction(event -> onSubmit());
@@ -53,13 +65,16 @@ public class ResponseView {
         cancelButton.setCancelButton(true);
         cancelButton.setOnAction(event -> OnCancel());
 
-        responseVBox.getChildren().addAll(saveButton, cancelButton);
+        options.getChildren().addAll(saveButton, cancelButton);
+        responseVBox.getChildren().addAll(emptyLine, options);
         return responseVBox;
     }
 
     private void onSubmit() {
-        update();
-        switchToUserView();
+        Response response = update();
+        if (response != null) {
+            switchToUserView();
+        }
     }
 
     private void OnCancel() {
@@ -83,7 +98,7 @@ public class ResponseView {
             answerView = new MultipleChoiceAnswerView(responseVBox, question);
         }
         answerView.render();
-        answerViews.add(answerView);
+        m_answerViews.add(answerView);
     }
 
     public Response update() {
@@ -91,15 +106,45 @@ public class ResponseView {
         response.setPollId(poll.getPollId());
         response.setRespondingUser(respondingUser);
         List<Answer> answers = new ArrayList<>();
-        for (AnswerView answerView : answerViews) {
+        for (AnswerView answerView : m_answerViews) {
             answers.add(answerView.update());
         }
         response.setAnswers(answers);
-        if (poll.getResponses() == null) {
-            poll.setResponses(new ArrayList<>());
-        }
-        poll.getResponses().add(response);
-        return response;
+        return submitResponse(response);
     }
 
+    private Response submitResponse(Response response) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String pollObjAsJSON = mapper.writeValueAsString(response);
+            final HttpPost httpPost = new HttpPost("http://localhost:8080/minipulse/response");
+
+            final StringEntity entity = new StringEntity(pollObjAsJSON);
+            httpPost.setEntity(entity);
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse clientResponse = client.execute(httpPost)) {
+                    if (clientResponse.getStatusLine().getStatusCode() < 300) {
+                        return mapper.readValue(clientResponse.getEntity().getContent(), Response.class);
+                    }
+                    showError(clientResponse.getStatusLine().getReasonPhrase());
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            showError(e.getMessage());
+            return null;
+        }
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        alert.showAndWait();
+    }
 }

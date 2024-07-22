@@ -1,5 +1,8 @@
 package com.minipulse.exception;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+
 public class MiniPulseBadArgumentException extends Exception {
     public MiniPulseBadArgumentException() {
         super();
@@ -15,9 +18,5 @@ public class MiniPulseBadArgumentException extends Exception {
 
     public MiniPulseBadArgumentException(Throwable cause) {
         super(cause);
-    }
-
-    protected MiniPulseBadArgumentException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
     }
 }

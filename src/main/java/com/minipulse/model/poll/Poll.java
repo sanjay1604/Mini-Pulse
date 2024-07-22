@@ -3,11 +3,14 @@ package com.minipulse.model.poll;
 import com.minipulse.model.question.Question;
 import com.minipulse.model.response.Response;
 
+import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
 import java.util.List;
 
+@XmlRootElement
 public class Poll {
-    private List<Question> questions;
-    private List<Response> responses;
+    private List<Question> questions = new ArrayList<>();
+    private List<Response> responses = new ArrayList<>();
     private String PollId;
     private String owner;
     private PollState state;
@@ -68,5 +71,21 @@ public class Poll {
 
     public void setPollDescription(String pollDescription) {
         this.pollDescription = pollDescription;
+    }
+
+    public Poll clone() {
+        Poll clonePoll = new Poll();
+        clonePoll.setState(getState());
+        clonePoll.setPollTitle(getPollTitle());
+        clonePoll.setPollDescription(getPollDescription());
+        clonePoll.setOwner(getOwner());
+        clonePoll.setPollId(getPollId());
+        for (Question question : getQuestions()) {
+            clonePoll.questions.add(question.clone());
+        }
+        for (Response response : getResponses()) {
+            clonePoll.responses.add(response.clone());
+        }
+        return clonePoll;
     }
 }

@@ -7,8 +7,9 @@ import javafx.scene.layout.GridPane;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
+
 public class SingleChoiceQuestionView extends MultipleChoiceQuestionView {
     public SingleChoiceQuestionView(GridPane gridPane, int row, Question question) {
         super(gridPane, row, question);
@@ -27,7 +28,7 @@ public class SingleChoiceQuestionView extends MultipleChoiceQuestionView {
         SingleChoiceQuestion mcq = (SingleChoiceQuestion) question;
         mcq.setQuestionTitle(m_QuestionTitle.getText());
         mcq.setQuestionDescription(m_QuestionDescription.getText());
-        Map<Integer, String> choices = new HashMap<>();
+        Map<Integer, String> choices = new TreeMap<>();
         int key = 1;
         for (TextField choiceText : m_Choices) {
             choices.put(key, choiceText.getText());

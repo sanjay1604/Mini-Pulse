@@ -3,7 +3,6 @@ package com.minipulse.ui.answer;
 import com.minipulse.model.answer.Answer;
 import com.minipulse.model.question.Question;
 import javafx.scene.control.Label;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 
 public abstract class AnswerView {
@@ -18,9 +17,11 @@ public abstract class AnswerView {
     }
 
     public void render() {
+        Label emptyLine = new Label(" ");
+
         Label questionTitle = new Label(question.getQuestionTitle());
         Label questionDescription = new Label(question.getQuestionDescription());
-        answerVBox.getChildren().addAll(questionTitle, questionDescription);
+        answerVBox.getChildren().addAll(emptyLine, questionTitle, questionDescription);
         localRender();
     }
 

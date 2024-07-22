@@ -4,6 +4,7 @@ import com.minipulse.model.question.MultipleChoiceQuestion;
 import com.minipulse.model.question.Question;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -20,9 +21,6 @@ public class MultipleChoiceQuestionView extends QuestionView{
         super(gridPane, row, question);
         this.choiceGridPane = new GridPane();
 
-        GridPane.setColumnIndex(choiceGridPane, 1);
-        super.row++;
-        GridPane.setRowIndex(choiceGridPane, row);
         questionGridPane.getChildren().add(this.choiceGridPane);
         choiceGridPane.getColumnConstraints().addAll(new ColumnConstraints(400), new ColumnConstraints(200));
     }
@@ -44,9 +42,13 @@ public class MultipleChoiceQuestionView extends QuestionView{
         m_Choices.remove(choicesText);
     }
     public void localRender(){
+        GridPane.setColumnIndex(choiceGridPane, 1);
+        GridPane.setRowIndex(choiceGridPane, super.row);
+        super.row++;
+
         Button addButton = new Button("+");
         GridPane.setColumnIndex(addButton, 1);
-        GridPane.setRowIndex(addButton, 10000);
+        GridPane.setRowIndex(addButton, 9999);
         addButton.setAlignment(Pos.CENTER_RIGHT);
         addButton.setOnAction(actionEvent -> onAddChoice());
         choiceGridPane.getChildren().add(addButton);
@@ -56,6 +58,10 @@ public class MultipleChoiceQuestionView extends QuestionView{
             renderChoice(choice, choiceRow);
             choiceRow++;
         }
+        Label emptyLine = new Label(" ");
+        GridPane.setColumnIndex(emptyLine, 1);
+        GridPane.setRowIndex(emptyLine, 10000);
+        choiceGridPane.getChildren().add(emptyLine);
     }
 
     protected Collection<String> getChoices() {
@@ -75,7 +81,7 @@ public class MultipleChoiceQuestionView extends QuestionView{
         MultipleChoiceQuestion mcq = (MultipleChoiceQuestion) question;
         mcq.setQuestionTitle(m_QuestionTitle.getText());
         mcq.setQuestionDescription(m_QuestionDescription.getText());
-        Map<Integer, String> choices = new HashMap<>();
+        Map<Integer, String> choices = new TreeMap<>();
         int key = 1;
         for (TextField choiceText : m_Choices) {
             choices.put(key, choiceText.getText());

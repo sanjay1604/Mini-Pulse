@@ -1,10 +1,13 @@
 package com.minipulse.ui.poll;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minipulse.exception.MiniPulseBadArgumentException;
 import com.minipulse.model.poll.Poll;
 import com.minipulse.model.question.MultipleChoiceQuestion;
 import com.minipulse.model.question.Question;
 import com.minipulse.model.question.SingleChoiceQuestion;
 import com.minipulse.model.question.TextQuestion;
+import com.minipulse.resource.PollResource;
 import com.minipulse.ui.question.MultipleChoiceQuestionView;
 import com.minipulse.ui.question.QuestionView;
 import com.minipulse.ui.question.SingleChoiceQuestionView;
@@ -19,6 +22,12 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,14 +39,16 @@ public class PollView {
     private final GridPane gridPane;
     private int row = 1;
 
+    private PollResource pollResource = new PollResource();
     private ContextMenu contextMenu;
 
     /** View elements that hold user data for poll */
     private TextField m_PollTitle;
     private TextField m_PollDescription;
-    private final Set<QuestionView> questionViews = new HashSet<>();
+    private final Set<QuestionView> m_questionViews = new HashSet<>();
 
     private final Stage stage;
+
     public PollView(Stage stage, Poll poll) {
         this.stage = stage;
         this.poll = poll;
@@ -103,11 +114,12 @@ public class PollView {
         Button saveButton = new Button("Save");
         saveButton.setDefaultButton(true);
         saveButton.setMinHeight(30);
-        saveButton.setOnAction(event -> update());
+        saveButton.setOnAction(event -> onSubmit());
 
         Button cancelButton = new Button("Cancel");
         cancelButton.setCancelButton(true);
         cancelButton.setMinHeight(30);
+        cancelButton.setOnAction(event -> onCancel());
 
         buttonBox.setAlignment(Pos.CENTER_RIGHT);
         buttonBox.getChildren().addAll(addButton, saveButton, cancelButton);
@@ -117,6 +129,14 @@ public class PollView {
 
         gridPane.getChildren().addAll(pollTitle, pollTitleText, pollDescription, pollDescriptionText, buttonBox);
         return gridPane;
+    }
+
+    private void onCancel() {
+        switchToUserView();
+    }
+
+    private void onSubmit() {
+        update();
     }
 
     private void onAddQuestion(String type) {
@@ -145,19 +165,95 @@ public class PollView {
             questionView = new MultipleChoiceQuestionView(gridPane, row, question);
         }
         questionView.render();
-        questionViews.add(questionView);
+        m_questionViews.add(questionView);
     }
     public Poll update() {
-        poll.setPollTitle(m_PollTitle.getText());
-        poll.setPollDescription(m_PollDescription.getText());
+        Poll pollToSave = poll.clone();
+        pollToSave.setOwner(poll.getOwner());
+        pollToSave.setPollId(poll.getPollId());
+        pollToSave.setState(poll.getState());
+        pollToSave.setPollTitle(m_PollTitle.getText());
+        pollToSave.setPollDescription(m_PollDescription.getText());
         List<Question> questions = new ArrayList<>();
-        for (QuestionView questionView : questionViews) {
+        for (QuestionView questionView : m_questionViews) {
             if (questionView.isDeleted()) continue;
             questions.add(questionView.update());
         }
-        poll.setQuestions(questions);
-        switchToUserView();
-        return poll;
+        pollToSave.setQuestions(questions);
+
+        Poll updatedPoll = null;
+        try {
+            if (poll.getPollId() == null) {
+                updatedPoll = createNewPoll(pollToSave);
+            } else {
+                updatedPoll = updateExistingPoll(pollToSave);
+            }
+            switchToUserView();
+        } catch (MiniPulseBadArgumentException e) {
+            showError(e.getMessage());
+        }
+        return updatedPoll;
+    }
+
+    private Poll updateExistingPoll(Poll pollToSave) throws MiniPulseBadArgumentException {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String pollObjAsJSON = mapper.writeValueAsString(pollToSave);
+            final HttpPut httpPut = new HttpPut("http://localhost:8080/minipulse/poll");
+
+            final StringEntity entity = new StringEntity(pollObjAsJSON);
+            httpPut.setEntity(entity);
+            httpPut.setHeader("Accept", "application/json");
+            httpPut.setHeader("Content-type", "application/json");
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse response = client.execute(httpPut)) {
+                    if (response.getStatusLine().getStatusCode() < 300) {
+                        return mapper.readValue(response.getEntity().getContent(), Poll.class);
+                    }
+                    showError(response.getStatusLine().getReasonPhrase());
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            showError(e.getMessage());
+            return null;
+        }
+    }
+
+    private Poll createNewPoll(Poll pollToSave) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String pollObjAsJSON = mapper.writeValueAsString(pollToSave);
+            final HttpPost httpPost = new HttpPost("http://localhost:8080/minipulse/poll");
+
+            final StringEntity entity = new StringEntity(pollObjAsJSON);
+            httpPost.setEntity(entity);
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
+
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                try (CloseableHttpResponse response = client.execute(httpPost)) {
+                    if (response.getStatusLine().getStatusCode() < 300) {
+                        return mapper.readValue(response.getEntity().getContent(), Poll.class);
+                    }
+                    showError(response.getStatusLine().getReasonPhrase());
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            showError(e.getMessage());
+            return null;
+        }
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        alert.showAndWait();
     }
 
     private void switchToUserView() {

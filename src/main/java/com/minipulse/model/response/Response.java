@@ -2,13 +2,14 @@ package com.minipulse.model.response;
 
 import com.minipulse.model.answer.Answer;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
+@XmlRootElement
 public class Response {
     private String respondingUser;
     private String pollId;
     private String responseId;
-
     private List<Answer> answers;
 
     public List<Answer> getAnswers() {
@@ -18,9 +19,6 @@ public class Response {
     public void setAnswers(List<Answer> answers) {
         this.answers = answers;
     }
-
-
-
 
     public String getRespondingUser() {
         return respondingUser;
@@ -46,5 +44,14 @@ public class Response {
         this.pollId = pollId;
     }
 
-
+    public Response clone() {
+        Response cloneResponse = new Response();
+        cloneResponse.setRespondingUser(getRespondingUser());
+        cloneResponse.setResponseId(getResponseId());
+        cloneResponse.setPollId(getPollId());
+        for (Answer answer : getAnswers()) {
+            cloneResponse.answers.add(answer.clone());
+        }
+        return cloneResponse;
+    }
 }
