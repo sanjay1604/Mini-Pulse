@@ -40,4 +40,8 @@ public class MiniPulseApplication extends Application {
         primaryStage.setScene(LoginScene.getScene(primaryStage));
         primaryStage.show();
     }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }
