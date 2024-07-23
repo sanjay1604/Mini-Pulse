@@ -1,5 +1,9 @@
 package com.minipulse.db;
 
+import com.minipulse.model.answer.Answer;
+import com.minipulse.model.answer.MultipleChoiceAnswer;
+import com.minipulse.model.answer.SingleChoiceAnswer;
+import com.minipulse.model.answer.TextAnswer;
 import com.minipulse.model.poll.Poll;
 import com.minipulse.model.poll.PollState;
 import com.minipulse.model.question.*;
@@ -7,12 +11,23 @@ import com.minipulse.model.response.*;
 
 import java.sql.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MiniPulseDBImpl implements MiniPulseDB {
     private static final Logger LOGGER = Logger.getLogger(MiniPulseDBImpl.class.getName());
+
+    @Override
+    public List<Poll> getPollsByUser(String user) {
+        return null;
+    }
+
+    @Override
+    public List<Poll> getAcceptingPolls(String user) {
+        return null;
+    }
 
     // Retrieve Poll ID based on user and poll title
     public String getPollIdForUserByTitle(String user, String pollTitle) {
@@ -35,8 +50,8 @@ public class MiniPulseDBImpl implements MiniPulseDB {
     // Save Poll and Overwrite Questions
     public void savePollAndOverwriteQuestions(Poll poll) {
         String deleteQuestionsQuery = "DELETE FROM text_questions WHERE poll_id=?;" +
-                                      "DELETE FROM multiple_choice_questions WHERE poll_id=?;" +
-                                      "DELETE FROM single_choice_questions WHERE poll_id=?";
+                "DELETE FROM multiple_choice_questions WHERE poll_id=?;" +
+                "DELETE FROM single_choice_questions WHERE poll_id=?";
         String upsertPollQuery = "MERGE INTO polls USING (VALUES (?, ?, ?, ?, ?)) AS vals(poll_id, user, title, state, description) " +
                 "ON polls.poll_id=vals.poll_id " +
                 "WHEN MATCHED THEN UPDATE SET user=vals.user, title=vals.title, state=vals.state, description=vals.description " +
@@ -147,13 +162,13 @@ public class MiniPulseDBImpl implements MiniPulseDB {
             pst.setString(1, pollId);
             try (ResultSet rs = pst.executeQuery()) {
                 if (rs.next()) {
-                    return new Poll(
-                            rs.getString("poll_id"),
-                            rs.getString("user"),
-                            rs.getString("title"),
-                            PollState.valueOf(rs.getString("state")),
-                            rs.getString("description")
-                    );
+                    Poll poll = new Poll();
+                    poll.setPollId(rs.getString("poll_id"));
+                    poll.setOwner(rs.getString("user"));
+                    poll.setPollTitle(rs.getString("title"));
+                    poll.setState(PollState.valueOf(rs.getString("state")));
+                    poll.setPollDescription(rs.getString("description"));
+                    return poll;
                 }
             }
         } catch (SQLException e) {
@@ -165,11 +180,11 @@ public class MiniPulseDBImpl implements MiniPulseDB {
     // Delete Poll Entirely
     public void deletePollEntirely(String pollId) {
         String deleteQuestionsQuery = "DELETE FROM text_questions WHERE poll_id=?;" +
-                                      "DELETE FROM multiple_choice_questions WHERE poll_id=?;" +
-                                      "DELETE FROM single_choice_questions WHERE poll_id=?;" +
-                                      "DELETE FROM choices WHERE question_id IN (SELECT question_id FROM text_questions WHERE poll_id=? " +
-                                      "UNION SELECT question_id FROM multiple_choice_questions WHERE poll_id=? " +
-                                      "UNION SELECT question_id FROM single_choice_questions WHERE poll_id=?)";
+                "DELETE FROM multiple_choice_questions WHERE poll_id=?;" +
+                "DELETE FROM single_choice_questions WHERE poll_id=?;" +
+                "DELETE FROM choices WHERE question_id IN (SELECT question_id FROM text_questions WHERE poll_id=? " +
+                "UNION SELECT question_id FROM multiple_choice_questions WHERE poll_id=? " +
+                "UNION SELECT question_id FROM single_choice_questions WHERE poll_id=?)";
         String deletePollQuery = "DELETE FROM polls WHERE poll_id=?";
         try (Connection con = getConnection();
              PreparedStatement delQuesSt = con.prepareStatement(deleteQuestionsQuery);
@@ -198,8 +213,8 @@ public class MiniPulseDBImpl implements MiniPulseDB {
         Poll poll = getPoll(pollId);
         if (poll != null) {
             String questionsQuery = "SELECT * FROM text_questions WHERE poll_id=? " +
-                                    "UNION ALL SELECT * FROM multiple_choice_questions WHERE poll_id=? " +
-                                    "UNION ALL SELECT * FROM single_choice_questions WHERE poll_id=?";
+                    "UNION ALL SELECT * FROM multiple_choice_questions WHERE poll_id=? " +
+                    "UNION ALL SELECT * FROM single_choice_questions WHERE poll_id=?";
             try (Connection con = getConnection();
                  PreparedStatement pst = con.prepareStatement(questionsQuery)) {
                 pst.setString(1, pollId);
@@ -243,6 +258,16 @@ public class MiniPulseDBImpl implements MiniPulseDB {
         return poll;
     }
 
+    @Override
+    public void newUser(String user, String userName) {
+
+    }
+
+    @Override
+    public String getUser(String user) {
+        return null;
+    }
+
     // Load Choices
     private void loadChoices(Connection con, Question question) throws SQLException {
         String query = "SELECT * FROM choices WHERE question_id=?";
@@ -273,27 +298,32 @@ public class MiniPulseDBImpl implements MiniPulseDB {
              PreparedStatement insMCRespSt = con.prepareStatement(insMultipleChoiceResponseQuery);
              PreparedStatement insSCRespSt = con.prepareStatement(insSingleChoiceResponseQuery)) {
 
+            Answer textAnswer = new TextAnswer();
+            Answer multipleChoiceAnswer = new MultipleChoiceAnswer();
+            Answer singleChoiceAnswer = new SingleChoiceAnswer();
             // Determine the type of response and insert into the appropriate table
-            if (response instanceof TextResponse) {
-                TextResponse textResponse = (TextResponse) response;
-                insTextRespSt.setString(1, textResponse.getResponseId());
-                insTextRespSt.setString(2, textResponse.getPollId());
-                insTextRespSt.setString(3, textResponse.getQuestionId());
-                insTextRespSt.setString(4, textResponse.getAnswer());
+            if (textAnswer instanceof Answer) {
+                textAnswer  = (TextAnswer) textAnswer;
+                insTextRespSt.setString(1, textAnswer.getResponseId());
+                insTextRespSt.setString(2, textAnswer.getPollId());
+                insTextRespSt.setString(3, textAnswer.getQuestionId());
+                insTextRespSt.setString(4, textAnswer.getAnswerId());
+                insTextRespSt.setString(4, ((TextAnswer) textAnswer).getText());
                 insTextRespSt.executeUpdate();
-            } else if (response instanceof MultipleChoiceResponse) {
-                MultipleChoiceResponse mcResponse = (MultipleChoiceResponse) response;
-                insMCRespSt.setString(1, mcResponse.getResponseId());
-                insMCRespSt.setString(2, mcResponse.getPollId());
-                insMCRespSt.setString(3, mcResponse.getQuestionId());
-                insMCRespSt.setInt(4, mcResponse.getChoiceId());
+            } else if (multipleChoiceAnswer instanceof Answer ) {
+                 multipleChoiceAnswer = (MultipleChoiceAnswer) multipleChoiceAnswer;
+                insMCRespSt.setString(1, multipleChoiceAnswer.getResponseId());
+                insMCRespSt.setString(2, multipleChoiceAnswer.getPollId());
+                insMCRespSt.setString(3, multipleChoiceAnswer.getQuestionId());
+                insMCRespSt.setString(4, multipleChoiceAnswer.getAnswerId());
+                insMCRespSt.setInt(4, multipleChoiceAnswer.getChoices());
                 insMCRespSt.executeUpdate();
-            } else if (response instanceof SingleChoiceResponse) {
-                SingleChoiceResponse scResponse = (SingleChoiceResponse) response;
-                insSCRespSt.setString(1, scResponse.getResponseId());
-                insSCRespSt.setString(2, scResponse.getPollId());
-                insSCRespSt.setString(3, scResponse.getQuestionId());
-                insSCRespSt.setInt(4, scResponse.getChoiceId());
+            } else if (singleChoiceAnswer instanceof SingleChoiceAnswer) {
+                SingleChoiceAnswer scAnswer = (SingleChoiceAnswer) singleChoiceAnswer;
+                insSCRespSt.setString(1, scAnswer.getResponseId());
+                insSCRespSt.setString(2, scAnswer.getPollId());
+                insSCRespSt.setString(3, scAnswer.getQuestionId());
+                insSCRespSt.setInt(4, scAnswer.getChoice());
                 insSCRespSt.executeUpdate();
             }
 
@@ -304,60 +334,32 @@ public class MiniPulseDBImpl implements MiniPulseDB {
 
     // Get Response
     public Response getResponse(String responseId) {
-        String queryTextResponse = "SELECT * FROM text_responses WHERE response_id=?";
-        String queryMCResponse = "SELECT * FROM multiple_choice_responses WHERE response_id=?";
-        String querySCResponse = "SELECT * FROM single_choice_responses WHERE response_id=?";
+        String queryResponse = "SELECT * FROM responses WHERE response_id=?";
 
         try (Connection con = getConnection()) {
             // Try to get the response from text responses table
-            try (PreparedStatement pst = con.prepareStatement(queryTextResponse)) {
+            try (PreparedStatement pst = con.prepareStatement(queryResponse)) {
                 pst.setString(1, responseId);
                 try (ResultSet rs = pst.executeQuery()) {
                     if (rs.next()) {
-                        return new TextResponse(
-                                rs.getString("response_id"),
-                                rs.getString("poll_id"),
-                                rs.getString("question_id"),
-                                rs.getString("answer")
-                        );
+                        Response response= new Response();
+                        response.setResponseId(rs.getString("response_id"));
+                        response.setPollId(rs.getString("poll_id"));
+                        response.setRespondingUser(rs.getString("responding_user"));
+                        //TODO: need to get the answers (response.setAnswers should give list)
+                        return response;
                     }
                 }
             }
-
-            // Try to get the response from multiple choice responses table
-            try (PreparedStatement pst = con.prepareStatement(queryMCResponse)) {
-                pst.setString(1, responseId);
-                try (ResultSet rs = pst.executeQuery()) {
-                    if (rs.next()) {
-                        return new MultipleChoiceResponse(
-                                rs.getString("response_id"),
-                                rs.getString("poll_id"),
-                                rs.getString("question_id"),
-                                rs.getInt("choice_id")
-                        );
-                    }
-                }
-            }
-
-            // Try to get the response from single choice responses table
-            try (PreparedStatement pst = con.prepareStatement(querySCResponse)) {
-                pst.setString(1, responseId);
-                try (ResultSet rs = pst.executeQuery()) {
-                    if (rs.next()) {
-                        return new SingleChoiceResponse(
-                                rs.getString("response_id"),
-                                rs.getString("poll_id"),
-                                rs.getString("question_id"),
-                                rs.getInt("choice_id")
-                        );
-                    }
-                }
-            }
-
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving response", e);
+            // Try to get the response from multiple choice responses tab
+            } catch (SQLException ex) {
+            throw new RuntimeException(ex);
         }
+
+        // Try to get the response from single choice responses table
+
         return null;
+    }
     }
 
     // Delete Response
