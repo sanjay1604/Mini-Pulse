@@ -1,3 +1,4 @@
+
 package com.minipulse.db;
 
 import com.minipulse.model.answer.Answer;
@@ -17,7 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MiniPulseDBImpl implements MiniPulseDB {
-    private static final Logger LOGGER = Logger.getLogger(MiniPulseDBImpl.class.getName());
+    private final Logger LOGGER = Logger.getLogger(MiniPulseDBImpl.class.getName());
 
     @Override
     public List<Poll> getPollsByUser(String user) {
@@ -32,17 +33,20 @@ public class MiniPulseDBImpl implements MiniPulseDB {
     // Retrieve Poll ID based on user and poll title
     public String getPollIdForUserByTitle(String user, String pollTitle) {
         String query = "SELECT poll_id FROM polls WHERE user=? AND title=?";
-        try (Connection con = getConnection();
-             PreparedStatement pst = con.prepareStatement(query)) {
-            pst.setString(1, user);
-            pst.setString(2, pollTitle);
-            try (ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("poll_id");
+        try (Connection con = DriverManager.getConnection("", "", "")) {
+            try (PreparedStatement pst = con.prepareStatement(query)) {
+                pst.setString(1, user);
+                pst.setString(2, pollTitle);
+                try (ResultSet rs = pst.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getString("poll_id");
+                    }
                 }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving poll ID", e);
+            throw new RuntimeException(e);
         }
         return null;
     }
@@ -60,7 +64,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
         String insertMultipleChoiceQuestionQuery = "INSERT INTO multiple_choice_questions(question_id, poll_id, question_text, question_desc, is_mandatory) VALUES (?, ?, ?, ?, ?)";
         String insertSingleChoiceQuestionQuery = "INSERT INTO single_choice_questions(question_id, poll_id, question_text, question_desc, is_mandatory) VALUES (?, ?, ?, ?, ?)";
 
-        try (Connection con = getConnection();
+        try (Connection con = DriverManager.getConnection("","","");
              PreparedStatement delQuesSt = con.prepareStatement(deleteQuestionsQuery);
              PreparedStatement upsertPollSt = con.prepareStatement(upsertPollQuery);
              PreparedStatement insTextQuesSt = con.prepareStatement(insertTextQuestionQuery);
@@ -144,20 +148,20 @@ public class MiniPulseDBImpl implements MiniPulseDB {
     // Modify Poll State
     public void modifyPollState(String pollId, PollState state) {
         String query = "UPDATE polls SET state=? WHERE poll_id=?";
-        try (Connection con = getConnection();
+        try (Connection con = DriverManager.getConnection("","","");
              PreparedStatement pst = con.prepareStatement(query)) {
             pst.setString(1, state.name());
             pst.setString(2, pollId);
             pst.executeUpdate();
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error modifying poll state", e);
+            throw new RuntimeException(e);
         }
     }
 
     // Get Poll
     public Poll getPoll(String pollId) {
         String query = "SELECT * FROM polls WHERE poll_id=?";
-        try (Connection con = getConnection();
+        try (Connection con = DriverManager.getConnection("","","");
              PreparedStatement pst = con.prepareStatement(query)) {
             pst.setString(1, pollId);
             try (ResultSet rs = pst.executeQuery()) {
@@ -172,7 +176,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
                 }
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving poll", e);
+            throw new RuntimeException(e);
         }
         return null;
     }
@@ -186,7 +190,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
                 "UNION SELECT question_id FROM multiple_choice_questions WHERE poll_id=? " +
                 "UNION SELECT question_id FROM single_choice_questions WHERE poll_id=?)";
         String deletePollQuery = "DELETE FROM polls WHERE poll_id=?";
-        try (Connection con = getConnection();
+        try (Connection con = DriverManager.getConnection("","","");
              PreparedStatement delQuesSt = con.prepareStatement(deleteQuestionsQuery);
              PreparedStatement delPollSt = con.prepareStatement(deletePollQuery)) {
 
@@ -204,7 +208,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
             delPollSt.executeUpdate();
 
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error deleting poll entirely", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -215,7 +219,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
             String questionsQuery = "SELECT * FROM text_questions WHERE poll_id=? " +
                     "UNION ALL SELECT * FROM multiple_choice_questions WHERE poll_id=? " +
                     "UNION ALL SELECT * FROM single_choice_questions WHERE poll_id=?";
-            try (Connection con = getConnection();
+            try (Connection con = DriverManager.getConnection("","","");
                  PreparedStatement pst = con.prepareStatement(questionsQuery)) {
                 pst.setString(1, pollId);
                 pst.setString(2, pollId);
@@ -250,9 +254,11 @@ public class MiniPulseDBImpl implements MiniPulseDB {
                             poll.getQuestions().add(question);
                         }
                     }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
                 }
             } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Error retrieving poll entirely", e);
+                throw new RuntimeException(e);
             }
         }
         return poll;
@@ -293,7 +299,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
         String insMultipleChoiceResponseQuery = "INSERT INTO multiple_choice_responses(response_id, poll_id, question_id, choice_id) VALUES (?, ?, ?, ?)";
         String insSingleChoiceResponseQuery = "INSERT INTO single_choice_responses(response_id, poll_id, question_id, choice_id) VALUES (?, ?, ?, ?)";
 
-        try (Connection con = getConnection();
+        try (Connection con = DriverManager.getConnection("","","");
              PreparedStatement insTextRespSt = con.prepareStatement(insTextResponseQuery);
              PreparedStatement insMCRespSt = con.prepareStatement(insMultipleChoiceResponseQuery);
              PreparedStatement insSCRespSt = con.prepareStatement(insSingleChoiceResponseQuery)) {
@@ -311,7 +317,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
                 insTextRespSt.setString(4, ((TextAnswer) textAnswer).getText());
                 insTextRespSt.executeUpdate();
             } else if (multipleChoiceAnswer instanceof Answer ) {
-                 multipleChoiceAnswer = (MultipleChoiceAnswer) multipleChoiceAnswer;
+                multipleChoiceAnswer = (MultipleChoiceAnswer) multipleChoiceAnswer;
                 insMCRespSt.setString(1, multipleChoiceAnswer.getResponseId());
                 insMCRespSt.setString(2, multipleChoiceAnswer.getPollId());
                 insMCRespSt.setString(3, multipleChoiceAnswer.getQuestionId());
@@ -328,7 +334,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
             }
 
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error saving response", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -336,7 +342,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
     public Response getResponse(String responseId) {
         String queryResponse = "SELECT * FROM responses WHERE response_id=?";
 
-        try (Connection con = getConnection()) {
+        try (Connection con = DriverManager.getConnection("","","");) {
             // Try to get the response from text responses table
             try (PreparedStatement pst = con.prepareStatement(queryResponse)) {
                 pst.setString(1, responseId);
@@ -352,7 +358,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
                 }
             }
             // Try to get the response from multiple choice responses tab
-            } catch (SQLException ex) {
+        } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
 
@@ -360,41 +366,20 @@ public class MiniPulseDBImpl implements MiniPulseDB {
 
         return null;
     }
-    }
 
     // Delete Response
     public void deleteResponse(String responseId) {
-        String delTextResponseQuery = "DELETE FROM text_responses WHERE response_id=?";
-        String delMCResponseQuery = "DELETE FROM multiple_choice_responses WHERE response_id=?";
-        String delSCResponseQuery = "DELETE FROM single_choice_responses WHERE response_id=?";
-
-        try (Connection con = getConnection();
-             PreparedStatement delTextRespSt = con.prepareStatement(delTextResponseQuery);
-             PreparedStatement delMCRespSt = con.prepareStatement(delMCResponseQuery);
-             PreparedStatement delSCRespSt = con.prepareStatement(delSCResponseQuery)) {
-
-            // Try to delete the response from text responses table
-            delTextRespSt.setString(1, responseId);
-            int rowsAffected = delTextRespSt.executeUpdate();
-            if (rowsAffected > 0) return;
-
-            // Try to delete the response from multiple choice responses table
-            delMCRespSt.setString(1, responseId);
-            rowsAffected = delMCRespSt.executeUpdate();
-            if (rowsAffected > 0) return;
-
-            // Try to delete the response from single choice responses table
-            delSCRespSt.setString(1, responseId);
-            delSCRespSt.executeUpdate();
-
+        String delResponseQuery="DELETE from responses where response_id=?";
+        try(Connection con= DriverManager.getConnection("","","");
+        PreparedStatement pst =con.prepareStatement(delResponseQuery);)
+        {
+            // Considering that the response_id is unique in every poll and no one user can have same the response_id for two different polls
+            pst.setString(1,responseId);
+            pst.executeUpdate();
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error deleting response", e);
+            throw new RuntimeException(e);
         }
     }
-
-    // Establish Database Connection
-    private Connection getConnection() throws SQLException {
-        // Update with your database URL, username, and password
-        return DriverManager.getConnection("jdbc:your_database_url", "your_username", "your_password");
-    }
 }
+
+
