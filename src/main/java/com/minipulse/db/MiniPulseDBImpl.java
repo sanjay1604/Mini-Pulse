@@ -1,4 +1,3 @@
-
 package com.minipulse.db;
 
 import com.minipulse.model.answer.Answer;
@@ -187,7 +186,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
                 "DELETE from text_questions where poll_id=?;" +
                 "DELETE from multiple_choice_questions where poll_id=?;" +
                 "DELETE from single_choice_questions where poll_id=?;" +
-                "DELETE from choices where question_id IN (
+                "DELETE from choices where question_id IN ("+
                 "UNION SELECT question_id FROM multiple_choice_questions WHERE poll_id=? " +
                 "UNION SELECT question_id FROM single_choice_questions WHERE poll_id=?)";
         String deletePollQuery = "DELETE FROM polls WHERE poll_id=?";
@@ -340,7 +339,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
 
                     // Insert into multiple_choice_answers table
                     insMcAnsSt.setString(1, answer.getAnswerId());
-                    insMcAnsSt.setInt(2, ((MultipleChoiceAnswer) answer).getChoiceId());
+                    insMcAnsSt.setInt(2, ((MultipleChoiceAnswer) answer).getChoices().get(0));
                     insMcAnsSt.executeUpdate();
 
                 } else if (answer instanceof SingleChoiceAnswer) {
@@ -354,7 +353,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
 
                     // Insert into single_choice_answers table
                     insScAnsSt.setString(1, answer.getAnswerId());
-                    insScAnsSt.setInt(2, ((SingleChoiceAnswer) answer).getChoiceId());
+                    insScAnsSt.setInt(2, ((SingleChoiceAnswer) answer).getChoice());
                     insScAnsSt.executeUpdate();
                 }
             }
@@ -416,5 +415,4 @@ public class MiniPulseDBImpl implements MiniPulseDB {
     }
 
 }
-
 
