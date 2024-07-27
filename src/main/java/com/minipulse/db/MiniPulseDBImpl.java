@@ -187,7 +187,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
                 "DELETE from text_questions where poll_id=?;" +
                 "DELETE from multiple_choice_questions where poll_id=?;" +
                 "DELETE from single_choice_questions where poll_id=?;" +
-                "DELETE from choices where question_id IN (SELECT question_id FROM text_questions where poll_id=? " +
+                "DELETE from choices where question_id IN (
                 "UNION SELECT question_id FROM multiple_choice_questions WHERE poll_id=? " +
                 "UNION SELECT question_id FROM single_choice_questions WHERE poll_id=?)";
         String deletePollQuery = "DELETE FROM polls WHERE poll_id=?";
@@ -202,7 +202,6 @@ public class MiniPulseDBImpl implements MiniPulseDB {
             delQuesSt.setString(4, pollId);
             delQuesSt.setString(5, pollId);
             delQuesSt.setString(6, pollId);
-            delQuesSt.setString(7, pollId);
             delQuesSt.executeUpdate();
 
             // Delete the poll
