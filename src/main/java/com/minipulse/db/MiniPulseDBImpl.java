@@ -183,10 +183,11 @@ public class MiniPulseDBImpl implements MiniPulseDB {
 
     // Delete Poll Entirely
     public void deletePollEntirely(String pollId) {
-        String deleteQuestionsQuery = "DELETE FROM text_questions WHERE poll_id=?;" +
-                "DELETE FROM multiple_choice_questions WHERE poll_id=?;" +
-                "DELETE FROM single_choice_questions WHERE poll_id=?;" +
-                "DELETE FROM choices WHERE question_id IN (SELECT question_id FROM text_questions WHERE poll_id=? " +
+        String deleteQuestionsQuery = "DELETE from questions where poll_id=?"+
+                "DELETE from text_questions where poll_id=?;" +
+                "DELETE from multiple_choice_questions where poll_id=?;" +
+                "DELETE from single_choice_questions where poll_id=?;" +
+                "DELETE from choices where question_id IN (SELECT question_id FROM text_questions where poll_id=? " +
                 "UNION SELECT question_id FROM multiple_choice_questions WHERE poll_id=? " +
                 "UNION SELECT question_id FROM single_choice_questions WHERE poll_id=?)";
         String deletePollQuery = "DELETE FROM polls WHERE poll_id=?";
@@ -201,6 +202,7 @@ public class MiniPulseDBImpl implements MiniPulseDB {
             delQuesSt.setString(4, pollId);
             delQuesSt.setString(5, pollId);
             delQuesSt.setString(6, pollId);
+            delQuesSt.setString(7, pollId);
             delQuesSt.executeUpdate();
 
             // Delete the poll
@@ -295,48 +297,74 @@ public class MiniPulseDBImpl implements MiniPulseDB {
 
     // Save Response
     public void saveResponse(Response response) {
-        String insTextResponseQuery = "INSERT INTO text_responses(response_id, poll_id, question_id, answer) VALUES (?, ?, ?, ?)";
-        String insMultipleChoiceResponseQuery = "INSERT INTO multiple_choice_responses(response_id, poll_id, question_id, choice_id) VALUES (?, ?, ?, ?)";
-        String insSingleChoiceResponseQuery = "INSERT INTO single_choice_responses(response_id, poll_id, question_id, choice_id) VALUES (?, ?, ?, ?)";
+        String insResponseQuery = "INSERT INTO responses(response_id, poll_id, question_id, answer_type) VALUES (?, ?, ?, ?)";
+        String insAnswerQuery = "INSERT INTO answers(answer_id, response_id) VALUES (?, ?)";
+        String insTextAnswerQuery = "INSERT INTO text_answers(answer_id, text_answer) VALUES (?, ?)";
+        String insMultipleChoiceAnswerQuery = "INSERT INTO multiple_choice_answers(answer_id, choice_id) VALUES (?, ?)";
+        String insSingleChoiceAnswerQuery = "INSERT INTO single_choice_answers(answer_id, choice_id) VALUES (?, ?)";
 
-        try (Connection con = DriverManager.getConnection("","","");
-             PreparedStatement insTextRespSt = con.prepareStatement(insTextResponseQuery);
-             PreparedStatement insMCRespSt = con.prepareStatement(insMultipleChoiceResponseQuery);
-             PreparedStatement insSCRespSt = con.prepareStatement(insSingleChoiceResponseQuery)) {
+        try (Connection con = DriverManager.getConnection("", "", "");
+             PreparedStatement insResponseSt = con.prepareStatement(insResponseQuery);
+             PreparedStatement insAnswerSt = con.prepareStatement(insAnswerQuery);
+             PreparedStatement insTextAnsSt = con.prepareStatement(insTextAnswerQuery);
+             PreparedStatement insMcAnsSt = con.prepareStatement(insMultipleChoiceAnswerQuery);
+             PreparedStatement insScAnsSt = con.prepareStatement(insSingleChoiceAnswerQuery)) {
 
-            Answer textAnswer = new TextAnswer();
-            Answer multipleChoiceAnswer = new MultipleChoiceAnswer();
-            Answer singleChoiceAnswer = new SingleChoiceAnswer();
-            // Determine the type of response and insert into the appropriate table
-            if (textAnswer instanceof Answer) {
-                textAnswer  = (TextAnswer) textAnswer;
-                insTextRespSt.setString(1, textAnswer.getResponseId());
-                insTextRespSt.setString(2, textAnswer.getPollId());
-                insTextRespSt.setString(3, textAnswer.getQuestionId());
-                insTextRespSt.setString(4, textAnswer.getAnswerId());
-                insTextRespSt.setString(4, ((TextAnswer) textAnswer).getText());
-                insTextRespSt.executeUpdate();
-            } else if (multipleChoiceAnswer instanceof Answer ) {
-                multipleChoiceAnswer = (MultipleChoiceAnswer) multipleChoiceAnswer;
-                insMCRespSt.setString(1, multipleChoiceAnswer.getResponseId());
-                insMCRespSt.setString(2, multipleChoiceAnswer.getPollId());
-                insMCRespSt.setString(3, multipleChoiceAnswer.getQuestionId());
-                insMCRespSt.setString(4, multipleChoiceAnswer.getAnswerId());
-                insMCRespSt.setInt(4, multipleChoiceAnswer.getChoices());
-                insMCRespSt.executeUpdate();
-            } else if (singleChoiceAnswer instanceof SingleChoiceAnswer) {
-                SingleChoiceAnswer scAnswer = (SingleChoiceAnswer) singleChoiceAnswer;
-                insSCRespSt.setString(1, scAnswer.getResponseId());
-                insSCRespSt.setString(2, scAnswer.getPollId());
-                insSCRespSt.setString(3, scAnswer.getQuestionId());
-                insSCRespSt.setInt(4, scAnswer.getChoice());
-                insSCRespSt.executeUpdate();
+            for (Answer answer : response.getAnswers()) {
+                // Insert into common responses table
+                insResponseSt.setString(1, answer.getResponseId());
+                insResponseSt.setString(2, answer.getPollId());
+                insResponseSt.setString(3, answer.getQuestionId());
+
+                if (answer instanceof TextAnswer) {
+                    insResponseSt.setString(4, "TEXT");
+                    insResponseSt.executeUpdate();
+
+                    // Insert into answers table
+                    insAnswerSt.setString(1, answer.getAnswerId());
+                    insAnswerSt.setString(2, answer.getResponseId());
+                    insAnswerSt.executeUpdate();
+
+                    // Insert into text_answers table
+                    insTextAnsSt.setString(1, answer.getAnswerId());
+                    insTextAnsSt.setString(2, ((TextAnswer) answer).getText());
+                    insTextAnsSt.executeUpdate();
+
+                } else if (answer instanceof MultipleChoiceAnswer) {
+                    insResponseSt.setString(4, "MULTIPLE");
+                    insResponseSt.executeUpdate();
+
+                    // Insert into answers table
+                    insAnswerSt.setString(1, answer.getAnswerId());
+                    insAnswerSt.setString(2, answer.getResponseId());
+                    insAnswerSt.executeUpdate();
+
+                    // Insert into multiple_choice_answers table
+                    insMcAnsSt.setString(1, answer.getAnswerId());
+                    insMcAnsSt.setInt(2, ((MultipleChoiceAnswer) answer).getChoiceId());
+                    insMcAnsSt.executeUpdate();
+
+                } else if (answer instanceof SingleChoiceAnswer) {
+                    insResponseSt.setString(4, "SINGLE");
+                    insResponseSt.executeUpdate();
+
+                    // Insert into answers table
+                    insAnswerSt.setString(1, answer.getAnswerId());
+                    insAnswerSt.setString(2, answer.getResponseId());
+                    insAnswerSt.executeUpdate();
+
+                    // Insert into single_choice_answers table
+                    insScAnsSt.setString(1, answer.getAnswerId());
+                    insScAnsSt.setInt(2, ((SingleChoiceAnswer) answer).getChoiceId());
+                    insScAnsSt.executeUpdate();
+                }
             }
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
+
 
     // Get Response
     public Response getResponse(String responseId) {
@@ -369,17 +397,25 @@ public class MiniPulseDBImpl implements MiniPulseDB {
 
     // Delete Response
     public void deleteResponse(String responseId) {
-        String delResponseQuery="DELETE from responses where response_id=?";
-        try(Connection con= DriverManager.getConnection("","","");
-        PreparedStatement pst =con.prepareStatement(delResponseQuery);)
-        {
-            // Considering that the response_id is unique in every poll and no one user can have same the response_id for two different polls
-            pst.setString(1,responseId);
-            pst.executeUpdate();
+        String delAnsquery = "DELETE from answers where response_id=?";
+        String delResquery = "DELETE from responses where response_id=?";
+        try (Connection con = DriverManager.getConnection("","","");
+             PreparedStatement delAnsSt = con.prepareStatement(delAnsquery);
+             PreparedStatement delResSt = con.prepareStatement(delResquery)) {
+
+            // Delete answers associated with the response
+            delAnsSt.setString(1, responseId);
+            delAnsSt.executeUpdate();
+
+            // Delete the response
+            delResSt.setString(1, responseId);
+            delResSt.executeUpdate();
+
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            LOGGER.log(Level.SEVERE, "Error deleting response", e);
         }
     }
+
 }
 
 
