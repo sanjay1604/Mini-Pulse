@@ -1,5 +1,5 @@
 # Mini-Pulse
-## IDEA Custom surveys created by user. These surveys can be responded by audience and results will be reported.
+## IDEA: Custom surveys created by user. These surveys can be responded by audience and results will be reported.
 
 ## SURVEY TEMPLATE 
 the survey will have three different question types: 
