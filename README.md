@@ -15,3 +15,5 @@ The interface would be in such a way that when a user logins, a list of owned po
 
 ### NOTE: 
 This repository will be updated regularly. PRs from contributers are greatly appreciated.
+# UPDATE: 
+This project is now closed. Contributions are still greatly appreciated!
